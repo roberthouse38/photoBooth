@@ -1,12 +1,38 @@
+/* Halaman Index */
 
 
+
+/* Halaman Camera */
+.camera-container {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+    background: wheat;
+    padding: 20px;
+    border-radius: 10px;
+}
+video {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+canvas{
+    display: none;
+}
+img {
+    margin-top: 15px;
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* Halaman About */
+/* ikon halaman about */
 .tech-icons {
     display: flex;
-    gap: 12px;
+    gap: 15px;
     flex-wrap: wrap;
     margin-top: 12px;
 }
-
 .tech-icons img{
     align-items: center;
     width: 24px;
@@ -14,3 +40,10 @@
     object-fit: contain;
     opacity: 0.85;
 }
+.tech-icons img:hover {
+    opacity: 1;
+    transform: scale(2.5);
+    transition: 0.2 ease;
+}
+
+
