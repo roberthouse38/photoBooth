@@ -1,0 +1,16 @@
+
+
+.tech-icons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.tech-icons img{
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    opacity: 0.85;
+}
