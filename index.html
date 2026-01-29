@@ -23,6 +23,8 @@
     </header>
    
     <main class="container mt-5 pt-4 text-center">
+    <div class="card p-4 mb-5 shadow-sm">
+    <div class="card-body">
     <h1>Selamat Datang di PhotoBooth</h1>
     <p>Aplikasi ini adalah aplikasi untuk kalian seru seruan bersama teman, keluarga, atau orang tersayang</p>
     <div class="text-center mt-4">
@@ -30,23 +32,44 @@
             <button  class="btn btn-primary">Ambil Foto  </button>
         </a>
     </div>
+    </div>
     <br>
 
     <!-- Map -->
-    <h1>Lokasi Booth Kami</h1>
-    <div class="container my-4">
-        <div class="card-body p-0">
-        <div class="ratio ratio-16x9">
-            <iframe
-            src="https://maps.google.com/maps?hl=en&q=Diponegoro%20University&t=k&z=14&output=embed"
-            style="border: 0px;;"
-            allowfullscreen
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade">
-            </iframe>
+    
+<!-- Map Section -->
+<div class="card p-4 shadow-sm">
+    <h2 class="mb-4">Lokasi Booth Kami</h2>
+    <div class="row align-items-center">
+        <div class="col-md-7">
+            <div class="ratio ratio-16x9">
+                <iframe
+                    src="https://maps.google.com/maps?hl=en&q=Diponegoro%20University&t=k&z=14&output=embed"
+                    style="border: 0; border-radius: 8px;"
+                    allowfullscreen
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
         </div>
+        
+        <div class="col-md-5">
+            <h4>Alamat</h4>
+            <hr>
+            <p>
+                <strong>PhotoBooth HQ</strong><br>
+                Gedung Laboratorium Teknik Komputer Lantai 3<br>
+                Universitas Diponegoro Semarang<br> 
+                Jl. Prof. Sudarto, SH<br>
+                Tembalang, Semarang<br>
+                Jawa Tengah, 50275
+            </p> 
+            <a href="https://maps.google.com/?q=Diponegoro+University" class="btn btn-outline-primary" target="_blank">
+                Buka di Google Maps
+            </a>
         </div>
     </div>
+</div>
     </main>
 
     <footer class="bg-white border-top">
