@@ -1,8 +1,10 @@
 const video = document.getElementById("video");
 const captureBtn = document.getElementById("captureBtn");
+
 const canvas = document.getElementById("canvas");
 const photo = document.getElementById("photo");
 const ctx = canvas.getContext("2d");
+
 const photoGrid = document.getElementById("photoGrid");
 let currentFilter = "none";
 let photoCount = 0;
@@ -17,8 +19,10 @@ navigator.mediaDevices.getUserMedia( {video: true} )
         console.error(err);
     });
 
-// Ambil Foto
+// Ambil Foto (hasilnya berubah sesuai filter)
 captureBtn.addEventListener("click", () => {
+    
+    //reset setelah 4x take foto
     if (photoCount >= 4) {
         photoGrid.innerHTML = "";
         photoCount = 0;
@@ -46,9 +50,16 @@ captureBtn.addEventListener("click", () => {
 });
 
 
-// Filter foto
+// Filter foto (untuk pas preview video)
 document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", ()=> {
         currentFilter = btn.dataset.filter;
+
+        video.className = "rounded shadow w-100";
+        if (currentFilter === "grayscale") {
+            video.classList.add("filter-grayscale"); //ini di css class            
+        } else if (currentFilter === "sepia") {
+            video.classList.add("filter-sepia");
+        }
     });
 });

@@ -12,9 +12,8 @@
     border-radius: 10px;
 }
 video {
-    width: 100%;
-    border-radius: 10px;
-    margin-bottom: 10px;
+   aspect-ratio: 1 / 1;
+   object-fit: cover;
 }
 canvas{
     display: none;
@@ -34,6 +33,12 @@ img {
     width: 100%;
     border-radius: 8px;
     border: 2px solid #ccc;
+}
+.filter-grayscale {
+    filter: grayscale(100%);
+}
+.filter-sepia {
+    filter: sepia(100%);
 }
 
 /* Halaman About */
