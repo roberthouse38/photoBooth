@@ -22,6 +22,8 @@ const photos = [];
 
 const frame = document.getElementById("frame");
 
+let layoutMode = "grid"; // "grid" | "strip"
+
 
 // Akses Kamera
 navigator.mediaDevices.getUserMedia( {video: true} )
@@ -55,7 +57,7 @@ captureBtn.addEventListener("click", () => {
     ctx.drawImage(video, 0, 0);
     ctx.filter = "none";
 
-      // gambar frame ke canvas
+    // gambar frame ke canvas
     if (currentFrame) {
         const frameImg = new Image();
         frameImg.src = currentFrame;
@@ -69,7 +71,13 @@ captureBtn.addEventListener("click", () => {
 });
 function savePhoto() {
     const data = canvas.toDataURL("image/png");
-    photos.push(data);
+
+    photos.push({
+        src: data,
+        w: canvas.width,
+        h: canvas.height,
+        time: new Date()
+    });
 
     const img = document.createElement("img");
     img.src = data;
@@ -77,6 +85,7 @@ function savePhoto() {
 
     photoCount++;
 }
+
 
 // Filter foto (untuk pas preview video)
 document.querySelectorAll("[data-filter]").forEach(btn => {
@@ -87,12 +96,12 @@ document.querySelectorAll("[data-filter]").forEach(btn => {
         if (currentFilter === "grayscale") {
             video.classList.add("filter-grayscale"); //ini di css class            
         } else if (currentFilter === "sepia") {
-            video.classList.add("filter-sepia");
+            video.classList.add("filter-sepia"); //ini juga
         }
     });
 });
 
-// Framme Foto
+// Frame Foto
 document.querySelectorAll("[data-frame]").forEach(btn => {
     btn.onclick = () => {
         frame.src = btn.dataset.frame;
@@ -100,31 +109,44 @@ document.querySelectorAll("[data-frame]").forEach(btn => {
     };
 });
 
-// Logic Download Foto
+
+// Logic Download Foto dari canvas
 downloadBtn.onclick = () => {
-    if(photos.length === 0) return;
+    if (photos.length === 0) return;
 
-    const size = 300;
-    const cols = 2;
-    const rows = Math.ceil(photos.length/2); 
+    const margin = 20;
+    const photoW = photos[0].w / 2;
+    const photoH = photos[0].h / 2;
 
-    canvas.width = size * cols;
-    canvas.height = size * rows;
+    let cols, rows;
 
-    let loaded = 0
+    if (layoutMode === "grid") {
+        cols = 2;
+        rows = Math.ceil(photos.length / 2);
+    } else {
+        cols = 1;
+        rows = photos.length;
+    }
 
-    photos.forEach((src, index) => {
+    canvas.width  = cols * photoW + (cols + 1) * margin;
+    canvas.height = rows * photoH + (rows + 1) * margin + 60;
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let loaded = 0;
+
+    photos.forEach((p, index) => {
         const img = new Image();
-        img.src = src;
+        img.src = p.src;
         img.onload = () => {
-            const x = (index % 2) * size;
-            const y = Math.floor(index / 2) * size;
-            ctx.drawImage(img, x, y, size, size);
-            
+            const x = margin + (layoutMode === "grid" ? (index % 2) * (photoW + margin) : 0);
+            const y = margin + Math.floor(index / (layoutMode === "grid" ? 2 : 1)) * (photoH + margin);
+
+            ctx.drawImage(img, x, y, photoW, photoH);
+
             loaded++;
-            if (loaded === photos.length) {
-                downloadFinal();
-            }
+            if (loaded === photos.length) drawFooter();
         };
     });
 };
@@ -135,3 +157,19 @@ function downloadFinal() {
     link.href = canvas.toDataURL("image/png");
     link.click();
 }
+
+function drawFooter() {
+    ctx.fillStyle = "#333";
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+        "PhotoBooth Team",
+        canvas.width / 2,
+        canvas.height - 30
+    );
+    downloadFinal();
+}
+
+const time = new Date().toLocaleString();
+ctx.font = "14px Arial";
+ctx.fillText(time, canvas.width / 2, canvas.height - 10);
