@@ -1,13 +1,27 @@
 const video = document.getElementById("video");
+
 const captureBtn = document.getElementById("captureBtn");
 
 const canvas = document.getElementById("canvas");
+
 const photo = document.getElementById("photo");
+
 const ctx = canvas.getContext("2d");
 
 const photoGrid = document.getElementById("photoGrid");
+
 let currentFilter = "none";
+
 let photoCount = 0;
+
+const downloadBtn = document.getElementById("downloadBtn");
+
+let currentFrame = null;
+
+const photos = [];
+
+const frame = document.getElementById("frame");
+
 
 // Akses Kamera
 navigator.mediaDevices.getUserMedia( {video: true} )
@@ -25,30 +39,44 @@ captureBtn.addEventListener("click", () => {
     //reset setelah 4x take foto
     if (photoCount >= 4) {
         photoGrid.innerHTML = "";
+        photos.length = 0;
         photoCount = 0;
     }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    if (currentFilter === "grayscale") {
-        ctx.filter = "grayscale(100%)";
-    } else if (currentFilter === "sepia") {
-        ctx.filter = "sepia(100%)";
-    } else {
-        ctx.filter = "none";
-    }
+    //filter
+    ctx.filter = 
+        currentFilter === "grayscale" ? "grayscale(100%)" :
+        currentFilter === "sepia" ? "sepia(100%)" :
+        "none";
 
     ctx.drawImage(video, 0, 0);
     ctx.filter = "none";
 
-    const img = document.createElement("img");
-    img.src = canvas.toDataURL("image/png");
-
-    photoGrid.appendChild(img);
-    photoCount++;
+      // gambar frame ke canvas
+    if (currentFrame) {
+        const frameImg = new Image();
+        frameImg.src = currentFrame;
+        frameImg.onload = () => {
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+            savePhoto();
+        };
+    } else {
+        savePhoto();
+    }
 });
+function savePhoto() {
+    const data = canvas.toDataURL("image/png");
+    photos.push(data);
 
+    const img = document.createElement("img");
+    img.src = data;
+    photoGrid.appendChild(img);
+
+    photoCount++;
+}
 
 // Filter foto (untuk pas preview video)
 document.querySelectorAll("[data-filter]").forEach(btn => {
@@ -63,3 +91,47 @@ document.querySelectorAll("[data-filter]").forEach(btn => {
         }
     });
 });
+
+// Framme Foto
+document.querySelectorAll("[data-frame]").forEach(btn => {
+    btn.onclick = () => {
+        frame.src = btn.dataset.frame;
+        currentFrame = btn.dataset.frame;
+    };
+});
+
+// Logic Download Foto
+downloadBtn.onclick = () => {
+    if(photos.length === 0) return;
+
+    const size = 300;
+    const cols = 2;
+    const rows = Math.ceil(photos.length/2); 
+
+    canvas.width = size * cols;
+    canvas.height = size * rows;
+
+    let loaded = 0
+
+    photos.forEach((src, index) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => {
+            const x = (index % 2) * size;
+            const y = Math.floor(index / 2) * size;
+            ctx.drawImage(img, x, y, size, size);
+            
+            loaded++;
+            if (loaded === photos.length) {
+                downloadFinal();
+            }
+        };
+    });
+};
+
+function downloadFinal() {
+    const link = document.createElement("a");
+    link.download = "photobooth.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
