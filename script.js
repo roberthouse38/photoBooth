@@ -1,82 +1,85 @@
-const video = document.getElementById("video");
+// VIDEO  → preview
+// CANVAS → hasil
+// PHOTOS → data
+// GRID   → UI
+// DOWNLOAD → canvas final
 
-const captureBtn = document.getElementById("captureBtn");
+//Setup, id diambil dari laman html
+const video = document.getElementById("video");             //live cam         
+const captureBtn = document.getElementById("captureBtn");   //tombol capture
+const canvas = document.getElementById("canvas");           //hasil capture
+const photo = document.getElementById("photo");             //
+const ctx = canvas.getContext("2d");                        //kuas
+const photoGrid = document.getElementById("photoGrid");     //preview grid
+const downloadBtn = document.getElementById("downloadBtn"); //tombol download canvas
+const photos = [];                                          //array hasil foto (album mentah)
+const frame = document.getElementById("frame");             //frame custom
 
-const canvas = document.getElementById("canvas");
+//State or variabel kontrol         
+let currentFilter = "none";         // filter aktif diawal? (tidak) 
+let photoCount = 0;                 // berapa kali capture foto
+let currentFrame = null;            // overlay png 
+let layoutMode = "grid";            // "grid" | "strip"
+let useFrameOnDownload = true;
 
-const photo = document.getElementById("photo");
-
-const ctx = canvas.getContext("2d");
-
-const photoGrid = document.getElementById("photoGrid");
-
-let currentFilter = "none";
-
-let photoCount = 0;
-
-const downloadBtn = document.getElementById("downloadBtn");
-
-let currentFrame = null;
-
-const photos = [];
-
-const frame = document.getElementById("frame");
-
-let layoutMode = "grid"; // "grid" | "strip"
-
-
-// Akses Kamera
-navigator.mediaDevices.getUserMedia( {video: true} )
+// Akses Kamera (real-time)
+navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser  
     .then(stream => {
         video.srcObject = stream;
     })
     .catch(err => {
-        alert("Camera access denied!");
+        alert("Camera access denied!");                 //alert message  
         console.error(err);
     });
 
-// Ambil Foto (hasilnya berubah sesuai filter)
+// Tombol Ambil Foto (hasilnya berubah sesuai filter)
 captureBtn.addEventListener("click", () => {
-    
     //reset setelah 4x take foto
     if (photoCount >= 4) {
         photoGrid.innerHTML = "";
         photos.length = 0;
         photoCount = 0;
     }
-
+    //ukuran foto 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
-    //filter
+    //filter kamera
     ctx.filter = 
         currentFilter === "grayscale" ? "grayscale(100%)" :
         currentFilter === "sepia" ? "sepia(100%)" :
         "none";
-
+    //snapshot 1 frame kamera ke canvas
     ctx.drawImage(video, 0, 0);
     ctx.filter = "none";
-
-    // gambar frame ke canvas
-    if (currentFrame) {
-        const frameImg = new Image();
-        frameImg.src = currentFrame;
-        frameImg.onload = () => {
-            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-            savePhoto();
-        };
-    } else {
-        savePhoto();
-    }
+    savePhoto();
+    updatePreviewLayout();
+    // gambar frame ke canvas 
+    // if (currentFrame) {
+    //     const frameImg = new Image();
+    //     frameImg.src = currentFrame;
+    //     frameImg.onload = () => {
+    //         ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    //         savePhoto();
+    //     };
+    // } else {
+    //     savePhoto();
+    // }
 });
+
+function updatePreviewLayout() {
+    photoGrid.classList.remove("grid", "strip");
+    photoGrid.classList.add(layoutMode);
+}
+
+// fungsi simpan foto as a data
 function savePhoto() {
     const data = canvas.toDataURL("image/png");
 
     photos.push({
-        src: data,
-        w: canvas.width,
-        h: canvas.height,
-        time: new Date()
+        src: data,          //gambar
+        w: canvas.width,    //lebar ukuran picture device
+        h: canvas.height,   //panjang ukuran picture device
+        time: new Date()    //timestamp
     });
 
     const img = document.createElement("img");
@@ -85,7 +88,6 @@ function savePhoto() {
 
     photoCount++;
 }
-
 
 // Filter foto (untuk pas preview video)
 document.querySelectorAll("[data-filter]").forEach(btn => {
@@ -109,17 +111,17 @@ document.querySelectorAll("[data-frame]").forEach(btn => {
     };
 });
 
-
 // Logic Download Foto dari canvas
 downloadBtn.onclick = () => {
     if (photos.length === 0) return;
 
     const margin = 20;
-    const photoW = photos[0].w / 2;
-    const photoH = photos[0].h / 2;
+    const photoW = photos[0].w / 2;     //600
+    const photoH = photos[0].h / 2;     //600
 
     let cols, rows;
 
+    //mode layout
     if (layoutMode === "grid") {
         cols = 2;
         rows = Math.ceil(photos.length / 2);
@@ -146,7 +148,7 @@ downloadBtn.onclick = () => {
             ctx.drawImage(img, x, y, photoW, photoH);
 
             loaded++;
-            if (loaded === photos.length) drawFooter();
+            if (loaded === photos.length) drawFinal();
         };
     });
 };
@@ -158,18 +160,41 @@ function downloadFinal() {
     link.click();
 }
 
+function drawFinal() {
+    if (useFrameOnDownload && currentFrame) {
+        const frameImg = new Image();
+        frameImg.src = currentFrame;
+        frameImg.onload = () => {
+            ctx.drawImage(
+                frameImg,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+            drawFooter();
+        };
+    } else {
+        drawFooter();
+    }
+}
+
 function drawFooter() {
     ctx.fillStyle = "#333";
-    ctx.font = "20px Arial";
+    ctx.font = "18px Arial";
     ctx.textAlign = "center";
+    const time = new Date().toLocaleString();
     ctx.fillText(
         "PhotoBooth Team",
         canvas.width / 2,
-        canvas.height - 30
+        canvas.height - 35
+    );
+    ctx.font = "14px Arial";
+    ctx.fillText(
+        time,
+        canvas.width / 2,
+        canvas.height - 15
     );
     downloadFinal();
 }
 
-const time = new Date().toLocaleString();
-ctx.font = "14px Arial";
-ctx.fillText(time, canvas.width / 2, canvas.height - 10);
