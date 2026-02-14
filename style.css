@@ -40,6 +40,10 @@
     object-fit: cover;
     border-radius: 12px;
 }
+/* saat retake keluar outline biru */
+.photo-grid img.selected {
+    outline: 3px solid #00c3FF;
+}
 
 /* FRAME OVERLAY */
 .frame-preview {

@@ -17,10 +17,10 @@ const frame = document.getElementById("frame");             //frame custom
 
 //State or variabel kontrol         
 let currentFilter = "none";         // filter aktif diawal? (tidak) 
-let photoCount = 0;                 // berapa kali capture foto
 let currentFrame = null;            // overlay png 
 let layoutMode = "grid";            // "grid" | "strip"
 let useFrameOnDownload = true;
+let retakeIndex = null;             // null = mode normal
 
 // Akses Kamera (real-time)
 navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser  
@@ -35,24 +35,38 @@ navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser
 // Tombol Ambil Foto (hasilnya berubah sesuai filter)
 captureBtn.addEventListener("click", () => {
     //reset setelah 4x take foto
-    if (photoCount >= 4) {
-        photoGrid.innerHTML = "";
-        photos.length = 0;
-        photoCount = 0;
+    // if (photos.length >= 4 && retakeIndex === null) {
+    //     photoGrid.innerHTML = "";
+    //     photos.length = 0;
+    // }
+
+    // kalau sudah 4 dan bukan retake -> stop
+    if (photos.length >= 4 && retakeIndex === null) {
+        return;
     }
+
     //ukuran foto 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     //filter kamera
     ctx.filter = 
         currentFilter === "grayscale" ? "grayscale(100%)" :
         currentFilter === "sepia" ? "sepia(100%)" :
         "none";
+
     //snapshot 1 frame kamera ke canvas
     ctx.drawImage(video, 0, 0);
     ctx.filter = "none";
+
     savePhoto();
     updatePreviewLayout();
+
+    //disabling mode retake
+    if (photos.length >= 4 && retakeIndex === null){
+        captureBtn.disabled = true;
+        captureBtn.classList.add("opacity-50");
+    }
 });
 
 // Layout
@@ -71,6 +85,7 @@ const LAYOUTS = {
     }
 };
 
+//Preview
 function updatePreviewLayout() {
     const layout = LAYOUTS[layoutMode];
     const previewBox = document.querySelector(".preview-box");
@@ -88,18 +103,54 @@ function updatePreviewLayout() {
 function savePhoto() {
     const data = canvas.toDataURL("image/png");
 
-    photos.push({
-        src: data,          //gambar
-        w: canvas.width,    //lebar ukuran picture device
-        h: canvas.height,   //panjang ukuran picture device
-        time: new Date()    //timestamp
-    });
+    //data foto
+    const photoData = {
+        src: data,
+        w: canvas.width,
+        h: canvas.height,
+        time: new Date()
+    };
+
+    // kalau sedang masuk mode retake
+    if (retakeIndex != null) {
+
+        photos[retakeIndex] = photoData;
+        //update gambar di grid
+        photoGrid.children[retakeIndex].src = data;
+        //hapus highlight
+        photoGrid.children[retakeIndex].classList.remove("selected");
+        //keluar dari mode retake
+        retakeIndex = null;
+
+        if (photos.length >= 4){
+            captureBtn.disabled = true;
+            captureBtn.classList.add("opacity-50")
+        }
+
+        return;
+    }
+
+    // mode normal
+    photos.push(photoData);
 
     const img = document.createElement("img");
     img.src = data;
+    img.dataset.index = photos.length - 1;
+
     photoGrid.appendChild(img);
 
-    photoCount++;
+    img.addEventListener("click", () => {
+        document.querySelectorAll(".photo-grid img").forEach(i => i.classList.remove("selected"));
+
+        img.classList.add("selected");
+
+        retakeIndex = Array.from(photoGrid.children).indexOf(img);
+        alert("Retake photo #" + (retakeIndex + 1));
+
+        //saat sudah 4x take, captureBtn aktif
+        captureBtn.disabled = false;
+        captureBtn.classList.remove("opacity-50")
+    });
 }
 
 // Filter foto (untuk pas preview video)
@@ -126,6 +177,19 @@ document.querySelectorAll("[data-frame]").forEach(btn => {
         // kanan (preview)
         framePreview.src = currentFrame;
     };
+});
+
+// Logic Reset Button
+const resetBtn = document.getElementById("resetBtn");
+
+resetBtn.addEventListener("click", () => {
+    
+    photoGrid.innerHTML = "";
+    photos.length = 0;
+    retakeIndex = null;
+
+    captureBtn.disabled = false;
+    captureBtn.classList.remove("opacity-50");
 });
 
 
