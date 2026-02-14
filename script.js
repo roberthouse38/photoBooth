@@ -53,22 +53,23 @@ captureBtn.addEventListener("click", () => {
     ctx.filter = "none";
     savePhoto();
     updatePreviewLayout();
-    // gambar frame ke canvas 
-    // if (currentFrame) {
-    //     const frameImg = new Image();
-    //     frameImg.src = currentFrame;
-    //     frameImg.onload = () => {
-    //         ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-    //         savePhoto();
-    //     };
-    // } else {
-    //     savePhoto();
-    // }
 });
 
 function updatePreviewLayout() {
-    photoGrid.classList.remove("grid", "strip");
-    photoGrid.classList.add(layoutMode);
+    const previewBox = document.querySelector(".preview-box");
+    const grid = document.getElementById("photoGrid");
+
+    grid.className = "photo-grid " + layoutMode;
+
+    if (layoutMode === "strip") {
+        previewBox.style.width = "180px";  // 50% dari 360
+        // ratio 360 x 1120
+        previewBox.style.aspectRatio = "360 / 1120";
+    } else {
+        previewBox.style.width = "300px";  // 50% dari 600
+        // ratio 600 x 700
+        previewBox.style.aspectRatio = "600 / 700";
+    }
 }
 
 // fungsi simpan foto as a data
@@ -104,12 +105,17 @@ document.querySelectorAll("[data-filter]").forEach(btn => {
 });
 
 // Frame Foto
+const framePreview = document.getElementById("framePreview");
+
 document.querySelectorAll("[data-frame]").forEach(btn => {
     btn.onclick = () => {
-        frame.src = btn.dataset.frame;
         currentFrame = btn.dataset.frame;
+
+        // kanan (preview)
+        framePreview.src = currentFrame;
     };
 });
+
 
 // Logic Download Foto dari canvas
 downloadBtn.onclick = () => {
