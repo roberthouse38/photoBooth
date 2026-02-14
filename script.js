@@ -55,21 +55,33 @@ captureBtn.addEventListener("click", () => {
     updatePreviewLayout();
 });
 
+// Layout
+const LAYOUTS = {
+    grid: {
+        canvasWidth: 700,
+        canvasHeight: 600,
+        cols: 2,
+        rows: 2
+    },
+    strip: {
+        canvasWidth: 360,
+        canvasHeight: 1120,
+        cols: 1,
+        rows: 4
+    }
+};
+
 function updatePreviewLayout() {
+    const layout = LAYOUTS[layoutMode];
     const previewBox = document.querySelector(".preview-box");
     const grid = document.getElementById("photoGrid");
 
+    //grid class change system anjay
     grid.className = "photo-grid " + layoutMode;
 
-    if (layoutMode === "strip") {
-        previewBox.style.width = "180px";  // 50% dari 360
-        // ratio 360 x 1120
-        previewBox.style.aspectRatio = "360 / 1120";
-    } else {
-        previewBox.style.width = "300px";  // 50% dari 600
-        // ratio 600 x 700
-        previewBox.style.aspectRatio = "600 / 700";
-    }
+    // set aspect ratio preview sesuai canvas
+    previewBox.style.aspectRatio =
+        layout.canvasWidth + " / " + layout.canvasHeight;
 }
 
 // fungsi simpan foto as a data
@@ -121,26 +133,20 @@ document.querySelectorAll("[data-frame]").forEach(btn => {
 downloadBtn.onclick = () => {
     if (photos.length === 0) return;
 
-    const margin = 20;
-    const photoW = photos[0].w / 2;     //600
-    const photoH = photos[0].h / 2;     //600
+    const layout = LAYOUTS[layoutMode];
 
-    let cols, rows;
-
-    //mode layout
-    if (layoutMode === "grid") {
-        cols = 2;
-        rows = Math.ceil(photos.length / 2);
-    } else {
-        cols = 1;
-        rows = photos.length;
-    }
-
-    canvas.width  = cols * photoW + (cols + 1) * margin;
-    canvas.height = rows * photoH + (rows + 1) * margin + 60;
+    canvas.width = layout.canvasWidth;
+    canvas.height = layout.canvasHeight;
 
     ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0,0, canvas.width, canvas.height);
+
+    const margin = 20;
+    const availableW = canvas.width - (layout.cols + 1) * margin;
+    const availableH = canvas.height - (layout.rows + 1) * margin - 60;
+
+    const photoW = availableW / layout.cols;
+    const photoH = availableH / layout.rows;
 
     let loaded = 0;
 
@@ -148,8 +154,11 @@ downloadBtn.onclick = () => {
         const img = new Image();
         img.src = p.src;
         img.onload = () => {
-            const x = margin + (layoutMode === "grid" ? (index % 2) * (photoW + margin) : 0);
-            const y = margin + Math.floor(index / (layoutMode === "grid" ? 2 : 1)) * (photoH + margin);
+            const col = index % layout.cols;
+            const row = Math.floor(index/layout.cols);
+
+            const x = margin + col * (photoW + margin);
+            const y = margin + row * (photoH + margin);
 
             ctx.drawImage(img, x, y, photoW, photoH);
 
