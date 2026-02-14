@@ -28,7 +28,14 @@ const STATE = {
     filter: "none",
     frame: null,
     retakeIndex: null,
-    maxPhotos: 4
+    maxPhotos: 4,
+
+    effects: {
+        grain: false,
+        lightLeak: false,
+        vignette: false,
+        duotone: false
+    }
 };
 // Layout
 const LAYOUTS = {
@@ -46,6 +53,17 @@ const LAYOUTS = {
         rows: 4,
         frames: ["frame/frame2.png"]
     }
+};
+// Filters
+const FILTERS = {
+  normal: "none",
+  grayscale: "grayscale(1)",
+  sepia: "sepia(1)",
+  vintage: "contrast(1.1) brightness(1.05) sepia(0.6)",
+  neon: "contrast(1.6) saturate(2) hue-rotate(90deg)",
+  purple: "hue-rotate(260deg) saturate(1.5)",
+  goldenHour: "sepia(0.4) contrast(1.2) brightness(1.1) hue-rotate(-10deg)",
+  DisposableCamera: "contrast(1.3) saturate(1.4) brightness(1.05)"
 };
 
 // Akses Kamera (real-time)
@@ -71,10 +89,8 @@ captureBtn.addEventListener("click", () => {
     canvas.height = video.videoHeight;
 
     //filter kamera
-    ctx.filter = 
-        STATE.filter === "grayscale" ? "grayscale(100%)" :
-        STATE.filter === "sepia" ? "sepia(100%)" :
-        "none";
+    ctx.filter = FILTERS[STATE.filter] || "none";
+
 
     //snapshot 1 frame kamera ke canvas
     ctx.drawImage(video, 0, 0);
@@ -145,6 +161,25 @@ document.querySelectorAll(".frame-btn").forEach(btn => {
     });
 });
 
+document.querySelectorAll(".effect-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+
+        const effectName = btn.dataset.effect;
+
+        // toggle true/false
+        STATE.effects[effectName] = !STATE.effects[effectName];
+
+        // highlight tombol aktif
+        if (STATE.effects[effectName]) {
+            btn.classList.remove("btn-outline-dark");
+            btn.classList.add("btn-dark");
+        } else {
+            btn.classList.remove("btn-dark");
+            btn.classList.add("btn-outline-dark");
+        }
+    });
+});
+
 
 // Fungsi layout dan frame saling terhubung
 function highlightActiveLayout() {
@@ -172,6 +207,66 @@ function setLayout(mode) {
     updateLayoutButtons();
     highlightActiveLayout();
 }
+
+function applyFilmGrain(intensity = 30) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const noise = (Math.random() - 0.5) * intensity;
+
+        data[i] += noise;     // R
+        data[i + 1] += noise; // G
+        data[i + 2] += noise; // B
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+function applyLightLeak() {
+    const gradient = ctx.createLinearGradient(
+        0, 0,
+        canvas.width,
+        canvas.height
+    );
+
+    gradient.addColorStop(0, "rgba(255, 0, 120, 0.25)");
+    gradient.addColorStop(0.5, "rgba(255, 200, 0, 0.15)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+function applyDuotone(color1, color2) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+
+        data[i]     = (avg / 255) * color1.r + (1 - avg/255) * color2.r;
+        data[i + 1] = (avg / 255) * color1.g + (1 - avg/255) * color2.g;
+        data[i + 2] = (avg / 255) * color1.b + (1 - avg/255) * color2.b;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+}
+function applyVignette() {
+    const gradient = ctx.createRadialGradient(
+        canvas.width/2,
+        canvas.height/2,
+        canvas.width/4,
+        canvas.width/2,
+        canvas.height/2,
+        canvas.width/1.2
+    );
+
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    gradient.addColorStop(1, "rgba(0,0,0,0.5)");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
 
 // fungsi simpan foto as a data
 function savePhoto() {
@@ -268,6 +363,7 @@ downloadBtn.onclick = () => {
     canvas.height = layout.canvasHeight;
 
     ctx.fillStyle = "#fff";
+    // ctx.fillStyle = "rgba(255, 0, 150, 0.2)";
     ctx.fillRect(0,0, canvas.width, canvas.height);
 
     const margin = 20;
@@ -305,23 +401,38 @@ function downloadFinal() {
 }
 
 function drawFinal() {
+
+    if (STATE.effects.duotone) {
+        applyDuotone(
+            {r:255,g:0,b:120},
+            {r:0,g:0,b:80}
+        );
+    }
+
+    if (STATE.effects.grain) {
+        applyFilmGrain(25);
+    }
+
+    if (STATE.effects.lightLeak) {
+        applyLightLeak();
+    }
+
+    if (STATE.effects.vignette) {
+        applyVignette();
+    }
+
     if (STATE.frame){
         const frameImg = new Image();
         frameImg.src = STATE.frame;
         frameImg.onload = () => {
-            ctx.drawImage(
-                frameImg,
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
             drawFooter();
         };
     } else {
         drawFooter();
     }
 }
+
 
 function drawFooter() {
     ctx.fillStyle = "#333";
