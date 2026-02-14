@@ -28,7 +28,7 @@
             <!-- left column -->
             <div class="col-md-6 text-center">
                 <h3 class="text-white mb-3">Camera</h3>
-                
+   
                 <!-- FRAME NYA -->
                 <div class="photo-wrapper">
                     <video id="video" autoplay class="rounded shadow w-100"></video>
@@ -47,6 +47,7 @@
                     <button data-filter="sepia" class="btn btn-outline-light btn-sm">Sepia</button>
                 </div>
 
+                <!-- Layout Mode -->
                 <div class="mt-3">
                     <button onclick="layoutMode='grid'; updatePreviewLayout()">Grid 2×2</button>
                     <button onclick="layoutMode='strip'; updatePreviewLayout()">Vertical Strip</button>
@@ -60,29 +61,26 @@
             </div>
 
             <!-- right column -->
-            <div class="col-md-6">
-                <div class="row align-items-center">
-                    <h3 class=" mb-3 text-center">Preview</h3>
-                    <div class="preview-box mx-auto">
-                        <div id="photoGrid" class="photo-grid grid"></div>
-                    </div>
-                    <!-- <img id="photo" class="img-fluid rounded shadow mb-3"/> -->
+            <div class="col-md-6 text-center">
+                <h3 class=" mb-4">Preview</h3>    
+                
+                <div class="preview-box mx-auto">
+                    <div id="photoGrid" class="photo-grid grid"></div>
                 </div>
-            
-                    <button id="downloadBtn" class="btn btn-success mt-2 ali"> 
+
+                <div class="d-flex justify-content-center mt-4">
+                    <button id="downloadBtn" class="btn btn-success">
                         Download Photo
                     </button>
-                
+                </div>
             </div>
-        </div>
 
+        </div>
         <canvas id="canvas" class="d-none"></canvas>
     </main>
-
-
       
     <!-- note -->
-        <!-- Race Camera -->
+    <!-- Race Camera -->
     <footer class="bg-white border-top">
         <div class="container py-3">
             <div class="row align-items-center">
@@ -99,7 +97,6 @@
             </div>
         </div>
     </footer>   
-
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script src="script.js"></script>
