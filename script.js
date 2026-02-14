@@ -19,7 +19,7 @@ const frame = document.getElementById("frame");             //frame custom
 let currentFilter = "none";         // filter aktif diawal? (tidak) 
 let currentFrame = null;            // overlay png 
 let layoutMode = "grid";            // "grid" | "strip"
-let useFrameOnDownload = true;
+let useFrameOnDownload = true;      // lol idk
 let retakeIndex = null;             // null = mode normal
 
 // Akses Kamera (real-time)
@@ -34,11 +34,6 @@ navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser
 
 // Tombol Ambil Foto (hasilnya berubah sesuai filter)
 captureBtn.addEventListener("click", () => {
-    //reset setelah 4x take foto
-    // if (photos.length >= 4 && retakeIndex === null) {
-    //     photoGrid.innerHTML = "";
-    //     photos.length = 0;
-    // }
 
     // kalau sudah 4 dan bukan retake -> stop
     if (photos.length >= 4 && retakeIndex === null) {
@@ -97,6 +92,58 @@ function updatePreviewLayout() {
     // set aspect ratio preview sesuai canvas
     previewBox.style.aspectRatio =
         layout.canvasWidth + " / " + layout.canvasHeight;
+}
+
+// const
+const layoutConfig = {
+    grid: {
+        defaultFrame: "frame/frame1.png"
+    },
+    strip: {
+        defaultFrame: "frame/frame2.png"
+    }
+};
+
+// Fungsi pasang frame
+function updateLayoutButtons() {
+    const frameButtons = document.querySelectorAll(".frame-btn");
+
+    frameButtons.forEach(btn => {
+        if (btn.dataset.layout === layoutMode){
+            btn.disabled = false;
+            btn.classList.remove("btn-secondary");
+        } else {
+            btn.disabled = true;
+            btn.classList.add("btn-secondary");
+        }
+    });
+}
+
+// Fungsi layout dan frame saling terhubung
+function highlightActiveLayout() {
+    const layoutButtons = document.querySelectorAll(".layout-btn");
+
+    layoutButtons.forEach(btn => {
+        if (btn.dataset.layout === layoutMode) {
+            btn.classList.remove("btn-outline-secondary");
+            btn.classList.add("btn-primary");
+        } else {
+            btn.classList.remove("btn-primary");
+            btn.classList.add("btn-outline-secondary");
+        }
+    });
+}
+
+function setLayout(mode) {
+    layoutMode = mode;
+
+    // auto set default frame
+    currentFrame = layoutConfig[mode].defaultFrame;
+    document.getElementById("framePreview").src = currentFrame;
+    
+    updatePreviewLayout();  
+    updateLayoutButtons();
+    highlightActiveLayout();
 }
 
 // fungsi simpan foto as a data

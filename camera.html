@@ -49,8 +49,8 @@
 
                 <!-- Layout Mode -->
                 <div class="mt-3">
-                    <button class="btn btn-outline-secondary btn-sm" onclick="layoutMode='grid'; updatePreviewLayout()">Grid 2×2</button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="layoutMode='strip'; updatePreviewLayout()">Vertical Strip</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="setLayout('grid')" data-layout="grid">Grid 2×2</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="setLayout('strip')" data-layout="strip">Vertical Strip</button>
                 </div>
 
             </div>
@@ -67,7 +67,7 @@
                     <img id="framePreview" class="frame-preview">
                 </div>
 
-            <!-- Reset -->
+                <!-- Reset -->
                 <div class="d-flex justify-content-center mt-4">
                     <button id="resetBtn" class="btn btn-secondary mt-2">
                         Start New Session
@@ -83,8 +83,8 @@
 
                 <!-- Tombol Frame -->
                 <div class="mt-3">
-                    <button data-frame="frame/worldwide.png">Polaroid</button>
-                    <button data-frame="frame/frame2.png">Classic</button>
+                    <button class="frame-btn" data-frame="frame/frame1.png" data-layout="grid">Grid Frame</button>
+                    <button class="frame-btn" data-frame="frame/frame2.png" data-layout="strip">Strip Frame</button>
                 </div>
             </div>
 
