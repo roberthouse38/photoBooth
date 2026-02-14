@@ -15,12 +15,38 @@ const downloadBtn = document.getElementById("downloadBtn"); //tombol download ca
 const photos = [];                                          //array hasil foto (album mentah)
 const frame = document.getElementById("frame");             //frame custom
 
-//State or variabel kontrol         
-let currentFilter = "none";         // filter aktif diawal? (tidak) 
-let currentFrame = null;            // overlay png 
-let layoutMode = "grid";            // "grid" | "strip"
-let useFrameOnDownload = true;      // lol idk
-let retakeIndex = null;             // null = mode normal
+// //State or variabel kontrol  (METODE LAMA)        
+// let currentFilter = "none";         // filter aktif diawal? (tidak) 
+// let currentFrame = null;            // overlay png 
+// let layoutMode = "grid";            // "grid" | "strip"
+// let useFrameOnDownload = true;      // lol idk
+// let retakeIndex = null;             // null = mode normal
+
+// State (METODE BARU)   
+const STATE = {
+    layout: "grid",
+    filter: "none",
+    frame: null,
+    retakeIndex: null,
+    maxPhotos: 4
+};
+// Layout
+const LAYOUTS = {
+    grid: {
+        canvasWidth: 700,
+        canvasHeight: 600,
+        cols: 2,
+        rows: 2,
+        frames: ["frame/frame1.png"]
+    },
+    strip: {
+        canvasWidth: 360,
+        canvasHeight: 1120,
+        cols: 1,
+        rows: 4,
+        frames: ["frame/frame2.png"]
+    }
+};
 
 // Akses Kamera (real-time)
 navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser  
@@ -36,7 +62,7 @@ navigator.mediaDevices.getUserMedia( {video: true} )    //izin kamera ke browser
 captureBtn.addEventListener("click", () => {
 
     // kalau sudah 4 dan bukan retake -> stop
-    if (photos.length >= 4 && retakeIndex === null) {
+    if (photos.length >= STATE.maxPhotos && STATE.retakeIndex === null){
         return;
     }
 
@@ -46,8 +72,8 @@ captureBtn.addEventListener("click", () => {
 
     //filter kamera
     ctx.filter = 
-        currentFilter === "grayscale" ? "grayscale(100%)" :
-        currentFilter === "sepia" ? "sepia(100%)" :
+        STATE.filter === "grayscale" ? "grayscale(100%)" :
+        STATE.filter === "sepia" ? "sepia(100%)" :
         "none";
 
     //snapshot 1 frame kamera ke canvas
@@ -58,36 +84,20 @@ captureBtn.addEventListener("click", () => {
     updatePreviewLayout();
 
     //disabling mode retake
-    if (photos.length >= 4 && retakeIndex === null){
+    if (photos.length >= 4 && STATE.retakeIndex === null){
         captureBtn.disabled = true;
         captureBtn.classList.add("opacity-50");
     }
 });
 
-// Layout
-const LAYOUTS = {
-    grid: {
-        canvasWidth: 700,
-        canvasHeight: 600,
-        cols: 2,
-        rows: 2
-    },
-    strip: {
-        canvasWidth: 360,
-        canvasHeight: 1120,
-        cols: 1,
-        rows: 4
-    }
-};
-
 //Preview
 function updatePreviewLayout() {
-    const layout = LAYOUTS[layoutMode];
+    const layout = LAYOUTS[STATE.layout];
     const previewBox = document.querySelector(".preview-box");
     const grid = document.getElementById("photoGrid");
 
     //grid class change system anjay
-    grid.className = "photo-grid " + layoutMode;
+    grid.className = "photo-grid " + STATE.layout;
 
     // set aspect ratio preview sesuai canvas
     previewBox.style.aspectRatio =
@@ -109,7 +119,7 @@ function updateLayoutButtons() {
     const frameButtons = document.querySelectorAll(".frame-btn");
 
     frameButtons.forEach(btn => {
-        if (btn.dataset.layout === layoutMode){
+        if (btn.dataset.layout === STATE.layout){
             btn.disabled = false;
             btn.classList.remove("btn-secondary");
         } else {
@@ -119,12 +129,29 @@ function updateLayoutButtons() {
     });
 }
 
+document.querySelectorAll(".frame-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+
+        const framePath = btn.dataset.frame;
+
+        if (!framePath) {
+            STATE.frame = null;
+            framePreview.src = "";
+            return;
+        }
+
+        STATE.frame = framePath;
+        framePreview.src = framePath;
+    });
+});
+
+
 // Fungsi layout dan frame saling terhubung
 function highlightActiveLayout() {
     const layoutButtons = document.querySelectorAll(".layout-btn");
 
     layoutButtons.forEach(btn => {
-        if (btn.dataset.layout === layoutMode) {
+        if (btn.dataset.layout === STATE.layout) {
             btn.classList.remove("btn-outline-secondary");
             btn.classList.add("btn-primary");
         } else {
@@ -135,11 +162,11 @@ function highlightActiveLayout() {
 }
 
 function setLayout(mode) {
-    layoutMode = mode;
+    STATE.layout = mode;
 
-    // auto set default frame
-    currentFrame = layoutConfig[mode].defaultFrame;
-    document.getElementById("framePreview").src = currentFrame;
+    // reset frame
+    STATE.frame = null;
+    framePreview.src = "";
     
     updatePreviewLayout();  
     updateLayoutButtons();
@@ -159,15 +186,15 @@ function savePhoto() {
     };
 
     // kalau sedang masuk mode retake
-    if (retakeIndex != null) {
+    if (STATE.retakeIndex != null) {
 
-        photos[retakeIndex] = photoData;
+        photos[STATE.retakeIndex] = photoData;
         //update gambar di grid
-        photoGrid.children[retakeIndex].src = data;
+        photoGrid.children[STATE.retakeIndex].src = data;
         //hapus highlight
-        photoGrid.children[retakeIndex].classList.remove("selected");
+        photoGrid.children[STATE.retakeIndex].classList.remove("selected");
         //keluar dari mode retake
-        retakeIndex = null;
+        STATE.retakeIndex = null;
 
         if (photos.length >= 4){
             captureBtn.disabled = true;
@@ -191,8 +218,8 @@ function savePhoto() {
 
         img.classList.add("selected");
 
-        retakeIndex = Array.from(photoGrid.children).indexOf(img);
-        alert("Retake photo #" + (retakeIndex + 1));
+        STATE.retakeIndex = Array.from(photoGrid.children).indexOf(img);
+        alert("Retake photo #" + (STATE.retakeIndex + 1));
 
         //saat sudah 4x take, captureBtn aktif
         captureBtn.disabled = false;
@@ -203,12 +230,12 @@ function savePhoto() {
 // Filter foto (untuk pas preview video)
 document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", ()=> {
-        currentFilter = btn.dataset.filter;
+        STATE.filter = btn.dataset.filter;
 
         video.className = "rounded shadow w-100";
-        if (currentFilter === "grayscale") {
+        if (STATE.filter === "grayscale") {
             video.classList.add("filter-grayscale"); //ini di css class            
-        } else if (currentFilter === "sepia") {
+        } else if (STATE.filter === "sepia") {
             video.classList.add("filter-sepia"); //ini juga
         }
     });
@@ -217,15 +244,6 @@ document.querySelectorAll("[data-filter]").forEach(btn => {
 // Frame Foto
 const framePreview = document.getElementById("framePreview");
 
-document.querySelectorAll("[data-frame]").forEach(btn => {
-    btn.onclick = () => {
-        currentFrame = btn.dataset.frame;
-
-        // kanan (preview)
-        framePreview.src = currentFrame;
-    };
-});
-
 // Logic Reset Button
 const resetBtn = document.getElementById("resetBtn");
 
@@ -233,7 +251,7 @@ resetBtn.addEventListener("click", () => {
     
     photoGrid.innerHTML = "";
     photos.length = 0;
-    retakeIndex = null;
+    STATE.retakeIndex = null;
 
     captureBtn.disabled = false;
     captureBtn.classList.remove("opacity-50");
@@ -244,7 +262,7 @@ resetBtn.addEventListener("click", () => {
 downloadBtn.onclick = () => {
     if (photos.length === 0) return;
 
-    const layout = LAYOUTS[layoutMode];
+    const layout = LAYOUTS[STATE.layout];
 
     canvas.width = layout.canvasWidth;
     canvas.height = layout.canvasHeight;
@@ -287,9 +305,9 @@ function downloadFinal() {
 }
 
 function drawFinal() {
-    if (useFrameOnDownload && currentFrame) {
+    if (STATE.frame){
         const frameImg = new Image();
-        frameImg.src = currentFrame;
+        frameImg.src = STATE.frame;
         frameImg.onload = () => {
             ctx.drawImage(
                 frameImg,
