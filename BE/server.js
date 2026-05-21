@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 //Middleware 2 "json req into object JS server"
 app.use(express.json());
+app.use("/uploads", express.static("uploads")); 
 
 //Middleware 3 (Multer) "data related 4 reading, saving, renaming, req.file creating" 
 const storage = multer.diskStorage({

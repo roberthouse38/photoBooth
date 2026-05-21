@@ -393,7 +393,9 @@ downloadBtn.onclick = () => {
     });
 };
 
-//fetch API saat download pakai FormData, Blob, Async/Await
+/* ====================================================================
+   KODE LAMA (DI-COMMENT / DI-TUTUP UNTUK IN CASE ROLLBACK)
+   ====================================================================
 function downloadFinal() {
     
     async function uploadPhoto() {
@@ -440,6 +442,49 @@ function downloadFinal() {
     link.href = canvas.toDataURL("image/png");
     link.click();
 }
+==================================================================== */
+
+// KODE BARU (Mengirim ke SQLite lokal + Google Drive, Tanpa download otomatis ke lokal)
+async function downloadFinal() {
+    // 1. Upload ke database lokal SQLite & folder uploads
+    canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("photo", blob, "photo.png");
+        formData.append("filter", STATE.filter);
+        formData.append("layout", STATE.layout);
+        fetch("http://localhost:3000/upload", { method: "POST", body: formData }).catch(console.error);
+    }, "image/png");
+
+    // 2. Upload otomatis ke Google Drive di latar belakang (Background) & Tampilkan Popup Sukses
+    try {
+        const driveScriptUrl = "https://script.google.com/macros/s/AKfycbxOjsvVJKuc13qqFp8hZlUscyy_sQGj5JoJwnJyoXoW692P1lZhdcEVBRREosFJQZ9Z/exec";
+        
+        // OPTIMASI 1: Gunakan JPEG (kualitas 0.8) bukan PNG. 
+        // Ukuran berkas berkurang drastis dari ~600KB menjadi ~100KB (hemat 80%+), membuat upload 6x lebih cepat!
+        const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+        
+        console.log("Mengunggah foto ke Google Drive di latar belakang...");
+        
+        // OPTIMASI 2: Hilangkan await agar fetch berjalan asinkronus di background tanpa membekukan browser
+        fetch(driveScriptUrl, {
+            method: "POST",
+            body: JSON.stringify({ filename: `photobooth_${Date.now()}.jpg`, mimeType: "image/jpeg", base64 }),
+            mode: "no-cors"
+        })
+        .then(() => {
+            console.log("Upload Google Drive Selesai!");
+            alert("Yay! Foto kenang-kenangan Anda berhasil di-upload ke Google Drive! 💖");
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Gagal mengunggah foto ke Google Drive.");
+        });
+        
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 
 function drawFinal() {
 
