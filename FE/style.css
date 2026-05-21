@@ -90,6 +90,7 @@ img {
 }
 #video, #photo {
     width: 100%;
+    transform: scaleX(-1);
     border-radius: 10px;
 }
 
