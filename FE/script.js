@@ -481,7 +481,7 @@ function drawFooter() {
     ctx.textAlign = "center";
     const time = new Date().toLocaleString();
     ctx.fillText(
-        "PhotoBooth Team",
+        "Expo Tekkom Undip 2026 - SMIKOLE",
         canvas.width / 2,
         canvas.height - 35
     );
@@ -520,32 +520,3 @@ fetch("http://localhost:3000")
         }
     }
     loadPhotos();
-
-    // async function addPhoto() {
-    //     const newPhoto = {
-    //         id: 3,
-    //         filter: "vintage",
-    //         layout: "grid"
-    //     };
-        
-    //     try{
-    //         const response = await fetch(
-    //             "http://localhost:3000/photos", {
-    //                 method: "POST",
-
-    //                 headers: {
-    //                     "Content-Type": "application/json"
-    //                 },
-
-    //                 body: JSON.stringify(newPhoto)
-    //             }
-    //         );
-    //         const data = await response.json();
-    //         console.log("post response: ");
-    //         console.log(data);
-
-    //     } catch(err) {
-    //         console.log(err);
-    //     }
-    // }
-    // addPhoto();
