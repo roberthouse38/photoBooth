@@ -44,14 +44,14 @@ const LAYOUTS = {
         canvasHeight: 600,
         cols: 2,
         rows: 2,
-        frames: ["frame/frame1.png"]
+        frames: ["../frame/frame1.png"]
     },
     strip: {
         canvasWidth: 360,
         canvasHeight: 1120,
         cols: 1,
         rows: 4,
-        frames: ["frame/frame2.png"]
+        frames: ["../frame/frame2.png"]
     }
 };
 // Filters object
@@ -123,10 +123,10 @@ function updatePreviewLayout() {
 // objek
 const layoutConfig = {
     grid: {
-        defaultFrame: "frame/frame1.png"
+        defaultFrame: "../frame/frame1.png"
     },
     strip: {
-        defaultFrame: "frame/frame2.png"
+        defaultFrame: "../frame/frame2.png"
     }
 };
 
