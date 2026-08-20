@@ -1,0 +1,7 @@
+{
+  "name": "photobooth",
+  "private": true,
+  "scripts": {
+    "start": "npm --prefix BE start"
+  }
+}

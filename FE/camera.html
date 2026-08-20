@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+     <header>
+        <nav class="navbar navbar-expand navbar-light bg-light shadow-sm mb-2 fixed-top">
+            <div class="container-fluid">
+                <a href="../index.html" class="navbar-brand mb-0 h1 fw-bold">PhotoBooth</a>
+                <div class="navbar-nav">
+                    <a class="nav-link" href="../index.html">Home</a>
+                    <a class="nav-link" href="gallery.html">Gallery</a>
+                    <a class="nav-link" href="about.html">About</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main class="container mt-5 pt-4">
+        <div class="row g-4">
+            <!-- left column -->
+            <div class="col-md-6 text-center">
+                <h3 class="text-white mb-3">Camera</h3>
+   
+                <!-- FRAME NYA -->
+                <div class="photo-wrapper">
+                    <video id="video" autoplay class="rounded shadow w-100"></video>
+                    <img id="frame" class="frame-overlay">
+                </div>
+                <p id="cameraStatus" class="text-white-50 small mt-2" role="status">
+                    Starting camera...
+                </p>
+
+                <!-- Tombol klik foto -->
+                <div class="mt-3">
+                    <button id="captureBtn" class="btn btn-danger rounded-circle btn-lg" disabled>Capture</button>
+                </div>
+
+                <!-- Tombol filter -->
+                <div class="filter-controls mt-3">
+                    <button data-filter="none" class="btn btn-secondary ">Normal</button>
+                    <button data-filter="grayscale" class="btn btn-dark ">Hitam Putih</button>
+                    <button data-filter="sepia" class="btn btn-warning ">Sepia</button>
+                </div>
+
+                <div class="mt-3">
+                    <button class="effect-btn btn btn-outline-dark btn-sm" data-effect="grain">Film Grain</button>
+                    <button class="effect-btn btn btn-outline-dark btn-sm" data-effect="lightLeak">Light Leak</button>
+                    <button class="effect-btn btn btn-outline-dark btn-sm" data-effect="vignette">Vignette</button>
+                    <button class="effect-btn btn btn-outline-dark btn-sm" data-effect="duotone">Duotone</button>
+                </div>
+
+                <!-- Layout Mode -->
+                <div class="mt-3">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="setLayout('grid')" data-layout="grid">Grid 2×2</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="setLayout('strip')" data-layout="strip">Vertical Strip</button>
+                </div>
+
+            </div>
+
+            <!-- right column -->
+            <div class="col-md-6 text-center">
+                <h3 class=" mb-4">Preview</h3>    
+                
+                <!-- Preview Box -->
+                <div class="preview-box mx-auto">
+                    <!-- FOTO GRID -->
+                    <div id="photoGrid" class="photo-grid grid"></div>
+                    <!-- FRAME OVERLAY -->
+                    <img id="framePreview" class="frame-preview">
+                </div>
+
+                <!-- Reset -->
+                <div class="d-flex justify-content-center mt-4">
+                    <button id="resetBtn" class="btn btn-secondary mt-2">
+                        Start New Session
+                    </button>
+                </div>
+
+                <!-- Download -->
+                <div class="d-flex justify-content-center mt-4">
+                    <button id="downloadBtn" class="btn btn-success">
+                        Download Photo
+                    </button>
+                </div>
+
+                <!-- Tombol Frame -->
+                <div class="mt-3">
+                    <button class="frame-btn" data-frame="" data-layout="grid">No Frame</button>
+                    <button class="frame-btn" data-frame="../frame/frame1.png" data-layout="grid">Grid Frame</button>
+                    <button class="frame-btn" data-frame="../frame/frame2.png" data-layout="strip">Strip Frame</button>
+                </div>
+            </div>
+
+        </div>
+        <canvas id="canvas" class="d-none"></canvas>
+    </main>
+      
+    <!-- note -->
+    <!-- Race Camera -->
+    <footer class="bg-white border-top">
+        <div class="container py-3">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center text-md-start">
+                    <span class="text-muted">&copy; 2026 PhotoBooth. All rights reserved.</span>
+                </div>
+                <div class="col-md-8 text-center text-md-end">
+                    <ul class="nav justify-content-center justify-content-md-end">
+                        <li class="nav-item"><a href="../index.html" class="nav-link px-2 text-muted">Home</a></li>
+                        <li class="nav-item"><a href="about.html" class="nav-link px-2 text-muted">About</a></li>
+                        <li class="nav-item"><a href="contact.html" class="nav-link px-2 text-muted">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>   
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+</html>
