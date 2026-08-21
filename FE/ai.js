@@ -68,6 +68,7 @@ async function enableAI(){
         alert("AI Error");
         aiButton.textContent = "Enable AI";
     } finally {
+        
         aiButton.disabled = false;
     }
 }
