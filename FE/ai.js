@@ -2,6 +2,7 @@ let faceLandmarker = null;
 let aiEnabled = false;
 let aiRunning = false;
 let lastVideoTime = -1;
+let loggedBlendshapes = false;
 
 import { 
     FaceLandmarker,
@@ -9,20 +10,21 @@ import {
  } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
     console.log("MediaPipe Face Landmarker loaded successfully");
 
-
 const video = document.getElementById("video");
 const faceCanvas = document.getElementById("faceCanvas");
 const faceCtx = faceCanvas.getContext("2d");
-const aiButton = document.querySelector(".AI-controls button");
+const aiButton = document.getElementById("aiToggleBtn");
+
 
 
 async function initializeAI(){
-    console.log("Initializing AI...");
+    console.log("Load AI...");
 
         const vision = await FilesetResolver.forVisionTasks(
         "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm");
 
             console.log("MediaPipe Vision Runtime Ready!");
+
 
         faceLandmarker = await FaceLandmarker.createFromOptions( 
             vision, 
@@ -33,7 +35,8 @@ async function initializeAI(){
                 minFaceDetectionConfidence:0.5,
                 minFacePresenceConfidence:0.5,
                 minTrackingConfidence:0.5,
-                // outputFaceBlendshapes: false,
+
+                outputFaceBlendshapes: true,
                 // outputFacialTransformationMatrixes: false,
                 // result_callback: Optional[Callable[[FaceLandmarkerResult, image_lib.Image, int], None]] = None
             }
@@ -60,9 +63,9 @@ async function enableAI(){
 
         aiEnabled = true;
         aiButton.textContent = "Disable AI";
-        aiButton.classList.remove("btn-primary");
-        aiButton.classList.add("btn-outline-primary");
-        startDecision();
+        aiButton.classList.remove("btn-outline-primary");
+        aiButton.classList.add("btn-primary");
+        startDetection();
     } catch (error) {
         console.error("Error initializing AI:", error);
         alert("AI Error");
@@ -86,7 +89,6 @@ function disableAI(){
 }
 
 function detectFace(){
-
     if(!aiEnabled){ 
         aiRunning = false;
         return;
@@ -101,24 +103,112 @@ function detectFace(){
             lastVideoTime = video.currentTime;    // Perform face detection logic here 
             
             const results = faceLandmarker.detectForVideo(video, performance.now());
+            
+            if (results.faceLandmarks.length > 0) {
+                const landmarks = results.faceLandmarks[0];
+                const box = getBoundingBox(landmarks);
+                drawBoundingBox(box);
+            }
+
+            if (results.faceBlendshapes.length > 0) {
+
+                const blendshapes = results.faceBlendshapes[0].categories;
+                
+                const smileLeft = blendshapes.find(x => x.categoryName === "mouthSmileLeft")?.score || 0;
+                const smileRight = blendshapes.find(x => x.categoryName === "mouthSmileRight")?.score || 0;
+
+                const smileScore = (smileLeft + smileRight) / 2;
+                console.log("Smile Score:", smileScore);
+
+                // console.log(
+                //     results.faceBlendshapes[0].categories
+                // );
+                loggedBlendshapes = true;
+            }
+            
             console.log(results);
 
+            //Pengkondisian apakah AI mendeteksi wajah atau tidak
             if (results.faceLandmarks.length > 0) {
-                console.log("Face detected!");
+                const landmarks = results.faceLandmarks[0];
+                const box = getBoundingBox(landmarks);
+                drawBoundingBox(box);
+                // console.log("Face detected!");
+            } else {
+                faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                // console.log("No face detected.");
             }
         }
     }
     requestAnimationFrame(detectFace);
 }
 
-function startDecision() {
+function startDetection(){
     if(aiRunning) return;
     aiRunning = true;
     detectFace();
-    }
+}
 
+function getBoundingBox(landmarks){
+    let minX = 1; 
+    let minY = 1;
+    let maxX = 0; 
+    let maxY = 0;
 
+    landmarks.forEach(point => {
+        minX = Math.min(minX, point.x);
+        minY = Math.min(minY, point.y);
+        maxX = Math.max(maxX, point.x);
+        maxY = Math.max(maxY, point.y);
+    });
 
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
 
+function drawBoundingBox(box){
+    const x = box.x * faceCanvas.width;
+    const y = box.y * faceCanvas.height;
+    const width = box.width * faceCanvas.width;
+    const height = box.height * faceCanvas.height;
 
-detectFace();
+    faceCtx.clearRect(0,0,faceCanvas.width, faceCanvas.height);
+    faceCtx.strokeStyle = "#00ff88";
+    faceCtx.lineWidth = 3;
+    faceCtx.strokeRect(x, y, width, height);
+}
+
+video.addEventListener("loadedmetadata", () => {
+
+    console.log(
+        "VIDEO:",
+        video.videoWidth,
+        video.videoHeight
+    );
+
+    faceCanvas.width =
+        video.videoWidth;
+
+    faceCanvas.height =
+        video.videoHeight;
+
+    console.log(
+        "CANVAS:",
+        faceCanvas.width,
+        faceCanvas.height
+    );
+
+    faceCtx.strokeStyle = "red";
+    faceCtx.lineWidth = 10;
+
+    faceCtx.strokeRect(
+        50,
+        50,
+        200,
+        200
+    );
+});

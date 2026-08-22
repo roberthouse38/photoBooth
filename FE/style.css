@@ -42,6 +42,7 @@
 .photo-grid img.selected {
     outline: 3px solid #00c3FF;
 }
+
 /* FRAME OVERLAY */
 .frame-preview {
     position: absolute;
@@ -78,7 +79,7 @@ video {
    object-fit: cover;
 }
 canvas{
-    display: none;
+    display: block;
 }
 img {
     width: 100%;
@@ -90,8 +91,27 @@ img {
 }
 #video, #photo {
     width: 100%;
-    transform: scaleX(-1);
+    display: block;
+    /* transform: scaleX(-1); */
     border-radius: 10px;
+}
+#faceCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+}
+.frame-overlay {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 4;
+    pointer-events: none;
 }
 
 .filter-grayscale {
