@@ -2,20 +2,17 @@ let faceLandmarker = null;
 let aiEnabled = false;
 let aiRunning = false;
 let lastVideoTime = -1;
-let loggedBlendshapes = false;
-
-import { 
-    FaceLandmarker,
-    FilesetResolver     //JS -> Task MediaPipe -> WASM/runtime -> AI MOdel
- } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
-    console.log("MediaPipe Face Landmarker loaded successfully");
 
 const video = document.getElementById("video");
 const faceCanvas = document.getElementById("faceCanvas");
 const faceCtx = faceCanvas.getContext("2d");
 const aiButton = document.getElementById("aiToggleBtn");
 
-
+import { 
+    FaceLandmarker,
+    FilesetResolver     //JS -> Task MediaPipe -> WASM/runtime -> AI MOdel
+ } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs";
+    console.log("MediaPipe Face Landmarker loaded successfully");
 
 async function initializeAI(){
     console.log("Load AI...");
@@ -44,14 +41,6 @@ async function initializeAI(){
     console.log("Face Landmarker Ready!");   
 }
 
-aiButton.addEventListener("click", async () => {
-    if(!aiEnabled){
-        await enableAI();
-    } else {
-        disableAI();
-    }
-});
-
 async function enableAI(){
     aiButton.disabled = true;
     aiButton.textContent = "Initializing AI...";
@@ -68,7 +57,7 @@ async function enableAI(){
         startDetection();
     } catch (error) {
         console.error("Error initializing AI:", error);
-        alert("AI Error");
+        alert("Failed to initialize AI. Please check the console for details.");
         aiButton.textContent = "Enable AI";
     } finally {
         
@@ -86,61 +75,6 @@ function disableAI(){
 
     faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
     console.log("AI Disabled");
-}
-
-function detectFace(){
-    if(!aiEnabled){ 
-        aiRunning = false;
-        return;
-    }
-    
-    if(
-        video.readyState >= 2 &&
-        video.videoWidth > 0  &&
-        video.videoHeight > 0
-    ){
-        if (video.currentTime !== lastVideoTime) {
-            lastVideoTime = video.currentTime;    // Perform face detection logic here 
-            
-            const results = faceLandmarker.detectForVideo(video, performance.now());
-            
-            if (results.faceLandmarks.length > 0) {
-                const landmarks = results.faceLandmarks[0];
-                const box = getBoundingBox(landmarks);
-                drawBoundingBox(box);
-            }
-
-            if (results.faceBlendshapes.length > 0) {
-
-                const blendshapes = results.faceBlendshapes[0].categories;
-                
-                const smileLeft = blendshapes.find(x => x.categoryName === "mouthSmileLeft")?.score || 0;
-                const smileRight = blendshapes.find(x => x.categoryName === "mouthSmileRight")?.score || 0;
-
-                const smileScore = (smileLeft + smileRight) / 2;
-                console.log("Smile Score:", smileScore);
-
-                // console.log(
-                //     results.faceBlendshapes[0].categories
-                // );
-                loggedBlendshapes = true;
-            }
-            
-            console.log(results);
-
-            //Pengkondisian apakah AI mendeteksi wajah atau tidak
-            if (results.faceLandmarks.length > 0) {
-                const landmarks = results.faceLandmarks[0];
-                const box = getBoundingBox(landmarks);
-                drawBoundingBox(box);
-                // console.log("Face detected!");
-            } else {
-                faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
-                // console.log("No face detected.");
-            }
-        }
-    }
-    requestAnimationFrame(detectFace);
 }
 
 function startDetection(){
@@ -181,6 +115,89 @@ function drawBoundingBox(box){
     faceCtx.lineWidth = 3;
     faceCtx.strokeRect(x, y, width, height);
 }
+
+function classifyExpression(smileScore){
+    if (smileScore < 0.15) {
+        return "Neutral";
+    }
+    if (smileScore < 0.40) {
+        return "Slight Smile";
+    }  
+    if (smileScore < 0.70) {
+        return "Happy";
+    }
+    return "Super Happy";
+}
+
+function getBlendshapeScore(categories, categoryName){
+    const category = categories.find(
+        item => item.categoryName === categoryName
+    );
+
+    if (!category) {
+        console.warn(`Blendshape category "${categoryName}" not found.`);
+        return 0;
+    }
+    
+    return category.score;
+}
+
+function detectFace(){
+    if(!aiEnabled){ 
+        aiRunning = false;
+        return;
+    }
+    
+    if(
+        video.readyState >= 2 &&
+        video.videoWidth > 0  &&
+        video.videoHeight > 0
+    ){
+        if (video.currentTime !== lastVideoTime) {
+            lastVideoTime = video.currentTime;    // Perform face detection logic here 
+            
+            const results = faceLandmarker.detectForVideo(video, performance.now());
+            
+            if (results.faceLandmarks.length > 0) {
+                const landmarks = results.faceLandmarks[0];
+                const box = getBoundingBox(landmarks);
+                drawBoundingBox(box);
+            }
+
+            //Pengkondisian apakah AI mendeteksi wajah atau tidak
+            if (results.faceBlendshapes.length > 0) {
+                const blendshapes = results.faceBlendshapes[0].categories;
+                
+                const smileLeft = getBlendshapeScore(blendshapes, "mouthSmileLeft");
+                const smileRight = getBlendshapeScore(blendshapes, "mouthSmileRight");
+
+                const smileScore = (smileLeft + smileRight) / 2;
+                // console.log("Smile Score:", smileScore);
+
+                const expression = classifyExpression(smileScore); 
+                
+                console.log("Smile:", smileScore.toFixed(3), " | Expression:", expression);
+                // console.log(
+                //     results.faceBlendshapes[0].categories
+                // );
+            }
+            // console.log(results);
+            else {
+                faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                // console.log("No face detected.");
+            }
+        }
+    }
+    requestAnimationFrame(detectFace);
+}
+
+aiButton.addEventListener("click", async () => {
+    if(!aiEnabled){
+        await enableAI();
+    } else {
+        disableAI();
+    }
+});
 
 video.addEventListener("loadedmetadata", () => {
 
