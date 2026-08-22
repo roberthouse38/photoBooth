@@ -10,9 +10,6 @@ const db = require("./database");
 
 
 const app = express();
-const uploadDir = path.join(__dirname, "uploads");
-
-fs.mkdirSync(uploadDir, { recursive: true });
 
 //Middleware 1 "auth & routing"
 app.use(cors());
