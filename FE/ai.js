@@ -152,21 +152,43 @@ function classifyExpression(blendshapes){
 
     // Mengambil skor senyum dan frown dari blendshapes
     const smileScore = getAverageScore(blendshapes, "mouthSmileLeft","mouthSmileRight");        //Happy
+    
+    // Mengambil skor frown dari blendshapes untuk ekspresi sedih  
     const frownScore = getAverageScore(blendshapes, "mouthFrownLeft","mouthFrownRight");        //Sad
 
-    
+    //Skor untuk ekspresi terkejut (surprised) berdasarkan mulut dan mata
+    const surpriseMouth = getBlendshapeScore(blendshapes, "jawOpen");
+    const surpriseEyes = getAverageScore(blendshapes, "eyeWideLeft", "eyeWideRight");
 
-    // const suprised = getBlendShapeScore(blendshapes, "jawOpen");
+    //Skor untuk ekspresi marah (angry) berdasarkan alis
+    const angryScore = getAverageScore(blendshapes, "browDownLeft", "browDownRight");
+    const squintScore = getAverageScore(blendshapes, "eyeSquintLeft", "eyeSquintRight");
+
+    //Smoothing untuk mengurangi fluktuasi skor senyum agar ekspresi wajah lebih stabil
     const smoothSmile = smoothSmileScore(smileScore);
 
-    console.log("Smile:", smoothSmile.toFixed(3),"| Frown:", frownScore.toFixed(3));
+    // const surpriseScore = (surpriseMouth + surpriseEyes) / 2;
 
+    //debugging output untuk memantau skor ekspresi wajah
+    console.log(
+        "Smile:", smileScore.toFixed(3),
+        "| Frown:", frownScore.toFixed(3),
+        "| Jaw:", surpriseMouth.toFixed(3),
+        "| Eyes:", surpriseEyes.toFixed(3),
+        "| Brow:", angryScore.toFixed(3),
+        "| Squint:", squintScore.toFixed(3)
+    );
+
+    //Threshold untuk menentukan ekspresi wajah berdasarkan skor f
     if (frownScore > 0.30 && smoothSmile < 0.20) {
         return "Sad";
     }
-
-    //Threshold untuk menentukan ekspresi wajah berdasarkan skor senyum
-    //hysteresis untuk menghindari fluktuasi ekspresi yang cepat
+    if (surpriseMouth > 0.35 && surpriseEyes > 0.15) {
+        return "Surprised";
+    }
+    if (angryScore > 0.40 && frownScore > 0.15) {
+        return "Angry";
+    }
     if (smoothSmile < 0.15) {
         return "Neutral";
     }
