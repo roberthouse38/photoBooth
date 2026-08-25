@@ -2,11 +2,14 @@ let faceLandmarker = null;
 let aiEnabled = false;
 let aiRunning = false;
 let lastVideoTime = -1;
+let smileHistory = [];
+let currentExpression = "Neutral";
 
 const video = document.getElementById("video");
 const faceCanvas = document.getElementById("faceCanvas");
 const faceCtx = faceCanvas.getContext("2d");
 const aiButton = document.getElementById("aiToggleBtn");
+const SMOOTHING_WINDOW = 5;
 
 import { 
     FaceLandmarker,
@@ -68,8 +71,12 @@ async function enableAI(){
 function disableAI(){
     aiEnabled = false;
     aiRunning = false;
+
+    smileHistory = [];
+    currentExpression = "Neutral";
     
     aiButton.textContent = "Enable AI";
+
     aiButton.classList.remove("btn-primary");
     aiButton.classList.add("btn-outline-primary");
 
@@ -104,19 +111,47 @@ function getBoundingBox(landmarks){
     };
 }
 
-function drawBoundingBox(box){
+function drawBoundingBox(box, expression){
     const x = box.x * faceCanvas.width;
     const y = box.y * faceCanvas.height;
     const width = box.width * faceCanvas.width;
     const height = box.height * faceCanvas.height;
 
+    //Detail Kotak Deteksi Wajah
     faceCtx.clearRect(0,0,faceCanvas.width, faceCanvas.height);
     faceCtx.strokeStyle = "#00ff88";
     faceCtx.lineWidth = 3;
     faceCtx.strokeRect(x, y, width, height);
+
+    //Font
+    faceCtx.font = " bold 20px Arial";
+
+    const text = expression;
+    const paddingX = 10;
+    const paddingY = 6;
+
+    // Mengukur ukuran teks agar label dapat ditempatkan dengan benar di atas kotak deteksi
+    const textWidth = faceCtx.measureText(text).width;
+    const labelHeight = 30; 
+
+    const labelx = x;
+    const labely = Math.max(0, y - labelHeight);
+
+    // Background label
+    faceCtx.fillStyle = "#00ff88";
+    faceCtx.fillRect(labelx, labely, textWidth + paddingX * 2, labelHeight);    
+
+    // Teks label
+    faceCtx.fillStyle = "#000000";
+    faceCtx.textBaseline = "middle";
+    faceCtx.fillText(text, labelx + paddingX, labely + labelHeight / 2);
+
 }
 
 function classifyExpression(smileScore){
+
+    //Threshold untuk menentukan ekspresi wajah berdasarkan skor senyum
+    //hysteresis untuk menghindari fluktuasi ekspresi yang cepat
     if (smileScore < 0.15) {
         return "Neutral";
     }
@@ -158,30 +193,33 @@ function detectFace(){
             
             const results = faceLandmarker.detectForVideo(video, performance.now());
             
-            if (results.faceLandmarks.length > 0) {
+            // Pengkondisian apakah AI mendeteksi wajah atau tidak
+            if (results.faceLandmarks.length > 0 && results.faceBlendshapes.length > 0) {
                 const landmarks = results.faceLandmarks[0];
                 const box = getBoundingBox(landmarks);
-                drawBoundingBox(box);
-            }
 
-            //Pengkondisian apakah AI mendeteksi wajah atau tidak
-            if (results.faceBlendshapes.length > 0) {
+                // Mengambil data blendshapes dari hasil deteksi wajah (misal mulut, mata, alis, dll)
                 const blendshapes = results.faceBlendshapes[0].categories;
                 
+                // Mengambil skor senyum dari kedua sisi wajah
                 const smileLeft = getBlendshapeScore(blendshapes, "mouthSmileLeft");
                 const smileRight = getBlendshapeScore(blendshapes, "mouthSmileRight");
 
-                const smileScore = (smileLeft + smileRight) / 2;
+                //Menghitung skor senyum rata-rata dari kedua sisi wajah
+                const rawSmileScore = (smileLeft + smileRight) / 2;
                 // console.log("Smile Score:", smileScore);
 
-                const expression = classifyExpression(smileScore); 
+                const smoothScore = smoothSmileScore(rawSmileScore);
                 
-                console.log("Smile:", smileScore.toFixed(3), " | Expression:", expression);
-                // console.log(
-                //     results.faceBlendshapes[0].categories
-                // );
+                //menentukan ekspresi wajah berdasarkan skor senyum
+                const expression = classifyExpression(smoothScore);
+
+                //RESULTS
+                drawBoundingBox(box, expression);
+
+                console.log("Raw:", rawSmileScore.toFixed(3), " | Smooth:", smoothScore.toFixed(3), " | Expression:", expression);
+            
             }
-            // console.log(results);
             else {
                 faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
                 // console.log("No face detected.");
@@ -189,6 +227,15 @@ function detectFace(){
         }
     }
     requestAnimationFrame(detectFace);
+}
+
+function smoothSmileScore(newScore){
+    smileHistory.push(newScore);
+    if (smileHistory.length > SMOOTHING_WINDOW) {
+        smileHistory.shift(); // Remove the oldest score
+    }
+    const total = smileHistory.reduce((sum, score) => sum + score, 0);
+    return total / smileHistory.length;
 }
 
 aiButton.addEventListener("click", async () => {
@@ -219,13 +266,13 @@ video.addEventListener("loadedmetadata", () => {
         faceCanvas.height
     );
 
-    faceCtx.strokeStyle = "red";
-    faceCtx.lineWidth = 10;
+    // faceCtx.strokeStyle = "red";
+    // faceCtx.lineWidth = 10;
 
-    faceCtx.strokeRect(
-        50,
-        50,
-        200,
-        200
-    );
+    // faceCtx.strokeRect(
+    //     50,
+    //     50,
+    //     200,
+    //     200
+    // );
 });
