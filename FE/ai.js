@@ -148,17 +148,32 @@ function drawBoundingBox(box, expression){
 
 }
 
-function classifyExpression(smileScore){
+function classifyExpression(blendshapes){
+
+    // Mengambil skor senyum dan frown dari blendshapes
+    const smileScore = getAverageScore(blendshapes, "mouthSmileLeft","mouthSmileRight");        //Happy
+    const frownScore = getAverageScore(blendshapes, "mouthFrownLeft","mouthFrownRight");        //Sad
+
+    
+
+    // const suprised = getBlendShapeScore(blendshapes, "jawOpen");
+    const smoothSmile = smoothSmileScore(smileScore);
+
+    console.log("Smile:", smoothSmile.toFixed(3),"| Frown:", frownScore.toFixed(3));
+
+    if (frownScore > 0.30 && smoothSmile < 0.20) {
+        return "Sad";
+    }
 
     //Threshold untuk menentukan ekspresi wajah berdasarkan skor senyum
     //hysteresis untuk menghindari fluktuasi ekspresi yang cepat
-    if (smileScore < 0.15) {
+    if (smoothSmile < 0.15) {
         return "Neutral";
     }
-    if (smileScore < 0.40) {
+    if (smoothSmile < 0.40) {
         return "Slight Smile";
     }  
-    if (smileScore < 0.70) {
+    if (smoothSmile < 0.70) {
         return "Happy";
     }
     return "Super Happy";
@@ -175,6 +190,12 @@ function getBlendshapeScore(categories, categoryName){
     }
     
     return category.score;
+}
+
+function getAverageScore(categories, leftName, rightName){
+    const leftScore = getBlendshapeScore(categories, leftName);
+    const rightScore = getBlendshapeScore(categories, rightName);
+    return (leftScore + rightScore) / 2;
 }
 
 function detectFace(){
@@ -195,29 +216,20 @@ function detectFace(){
             
             // Pengkondisian apakah AI mendeteksi wajah atau tidak
             if (results.faceLandmarks.length > 0 && results.faceBlendshapes.length > 0) {
+                
                 const landmarks = results.faceLandmarks[0];
                 const box = getBoundingBox(landmarks);
 
                 // Mengambil data blendshapes dari hasil deteksi wajah (misal mulut, mata, alis, dll)
                 const blendshapes = results.faceBlendshapes[0].categories;
-                
-                // Mengambil skor senyum dari kedua sisi wajah
-                const smileLeft = getBlendshapeScore(blendshapes, "mouthSmileLeft");
-                const smileRight = getBlendshapeScore(blendshapes, "mouthSmileRight");
-
-                //Menghitung skor senyum rata-rata dari kedua sisi wajah
-                const rawSmileScore = (smileLeft + smileRight) / 2;
-                // console.log("Smile Score:", smileScore);
-
-                const smoothScore = smoothSmileScore(rawSmileScore);
-                
-                //menentukan ekspresi wajah berdasarkan skor senyum
-                const expression = classifyExpression(smoothScore);
+            
+                // Klasifikasi ekspresi berdasarkan semua data blendshape
+                const expression = classifyExpression(blendshapes);
 
                 //RESULTS
                 drawBoundingBox(box, expression);
 
-                console.log("Raw:", rawSmileScore.toFixed(3), " | Smooth:", smoothScore.toFixed(3), " | Expression:", expression);
+                console.log("Expression:", expression);
             
             }
             else {
